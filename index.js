@@ -2,17 +2,25 @@
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
+const session = require('express-session')
 const connection = require('./database/database')
 
 const categoriesController = require('./categories/CategoriesController')
 const articlesController = require('./articles/ArticlesController')
+const usersController = require('./users/UsersController')
 
 //models
 const Article = require('./articles/Article')
 const Category = require('./categories/Category')
+const User = require('./users/User')
 
 //view engine
 app.set('view engine', 'ejs')
+
+//sessions --- Redis
+app.use(session({
+    secret: 'xvçlkjmdfagioprklçamecreajflopç', cookie: {maxAge: 30000000}
+}))
 
 //static
 app.use(express.static('public'))
@@ -30,13 +38,15 @@ connection.authenticate().then(() =>{
 
 app.use('/', categoriesController)
 app.use('/', articlesController)
+app.use('/', usersController)
 
 //main route
 app.get('/', (req, res) => {
     Article.findAll({
         order:[
             ['id', 'DESC']
-        ]
+        ],
+        limit: 4
     }).then(articles => {
         Category.findAll().then(categories => {
             res.render('index', {articles: articles, categories: categories})
